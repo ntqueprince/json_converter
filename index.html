@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Excel Cleaner & Preview (Download)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="wrap">
+
+<h2>Smart Excel Cleaner & Column-Aware Preview</h2>
+
+<input type="file" id="fileInput" accept=".xlsx" />
+
+<div class="controls">
+  <div class="stat">Rows: <b id="rowCount">0</b></div>
+  <div class="stat">Columns: <b id="colCount">0</b></div>
+
+  <button onclick="copyClean()">Copy Cleaned</button>
+  <button onclick="downloadTXT()">Download .txt</button>
+  <button onclick="downloadJS()">Download .js</button>
+</div>
+
+<div class="table-wrap">
+  <table id="previewTable"></table>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
