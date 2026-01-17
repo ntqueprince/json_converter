@@ -19,7 +19,7 @@ body{
 }
 
 h1{
-  font-size:20px;
+  font-size:22px;
   margin:0 0 8px;
 }
 
@@ -33,11 +33,12 @@ p{
   gap:10px;
   flex-wrap:wrap;
   margin:12px 0;
+  align-items:center;
 }
 
 textarea{
   width:100%;
-  min-height:420px;
+  min-height:520px;
   background:#0f1a33;
   border:1px solid rgba(255,255,255,.12);
   border-radius:12px;
@@ -49,14 +50,22 @@ textarea{
   resize:vertical;
 }
 
+#preview{
+  min-height:220px;
+}
+
+#outputJS{
+  min-height:520px;
+}
+
 button{
-  background:#2d7dff;
-  color:#fff;
+  background:#22c55e;
+  color:#04110a;
   border:none;
   padding:10px 14px;
   border-radius:12px;
   cursor:pointer;
-  font-weight:600;
+  font-weight:700;
 }
 
 button:hover{
@@ -64,8 +73,8 @@ button:hover{
 }
 
 .secondary{
-  background:#1f2b4a;
-  border:1px solid rgba(255,255,255,.12);
+  background:#16a34a;
+  color:#04110a;
 }
 
 input[type="file"]{
@@ -80,6 +89,7 @@ input[type="file"]{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:14px;
+  margin-top:14px;
 }
 
 .small{
@@ -98,6 +108,7 @@ input[type="file"]{
 .bar{
   height:12px;
   width:0%;
+  background:#22c55e;
 }
 
 .title{
