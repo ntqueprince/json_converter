@@ -1,36 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Smart Excel Cleaner & Preview (Download)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excel to endorsementData.js (AUTO)</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div class="wrap">
+  <div class="wrap">
+    <div class="card">
+      <h1>📌 Excel (.xlsx) → endorsementData.js (AUTO Headers)</h1>
+      <p>Excel upload karo → tool headers ko auto match karega → output exact <b>endorsementData.js</b> format me milega.</p>
 
-<h2>Smart Excel Cleaner & Column-Aware Preview</h2>
+      <div class="row">
+        <input type="file" id="fileInput" accept=".xlsx" />
+        <button id="btnConvert">Convert</button>
+        <button class="secondary" id="btnCopy">Copy JS</button>
+        <button class="secondary" id="btnDownload">Download .js</button>
+        <button class="secondary" id="btnClear">Clear</button>
+      </div>
 
-<input type="file" id="fileInput" accept=".xlsx" />
+      <div class="small" id="status">Ready.</div>
+      <div class="barWrap"><div class="bar" id="bar"></div></div>
 
-<div class="controls">
-  <div class="stat">Rows: <b id="rowCount">0</b></div>
-  <div class="stat">Columns: <b id="colCount">0</b></div>
+      <div class="grid" style="margin-top:14px;">
+        <div>
+          <h3 class="title">📥 Excel Preview</h3>
+          <textarea id="preview" readonly placeholder="Preview will appear here..."></textarea>
+        </div>
 
-  <button onclick="copyClean()">Copy Cleaned</button>
-  <button onclick="downloadTXT()">Download .txt</button>
-  <button onclick="downloadJS()">Download .js</button>
-</div>
+        <div>
+          <h3 class="title">📤 Output endorsementData.js</h3>
+          <textarea id="outputJS" readonly placeholder="JS output will appear here..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<div class="table-wrap">
-  <table id="previewTable"></table>
-</div>
+  <!-- SheetJS (Excel Reader) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="script.js"></script>
+  <!-- Your JS -->
+  <script src="script.js"></script>
 </body>
 </html>
