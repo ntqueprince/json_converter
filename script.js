@@ -11,7 +11,6 @@ const btnClear = document.getElementById("btnClear");
 
 let lastJS = "";
 
-// FINAL OUTPUT headers (fixed)
 const FINAL_HEADERS = [
   "InsurerRequirement",
   "Insurer",
@@ -25,7 +24,6 @@ const FINAL_HEADERS = [
   "Declaration format (if declaration required)"
 ];
 
-// AUTO header mapping (Excel me jo bhi naam ho, tool samajh jayega)
 const HEADER_ALIASES = {
   "InsurerRequirement": ["InsurerRequirement", "Insurer Requirement", "Insurer+Requirement", "Key", "Unique Key"],
   "Insurer": ["Insurer", "Company", "Insurance Company", "Insurer Name"],
@@ -46,11 +44,7 @@ const HEADER_ALIASES = {
 };
 
 function normalizeHeader(h){
-  return (h ?? "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return (h ?? "").toString().trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function safeValue(v){
@@ -100,7 +94,6 @@ async function convertExcel(){
 
   const headerRow = rows[0].map(h => (h ?? "").toString().trim());
 
-  // Build column map
   const colMap = {};
   const missing = [];
 
@@ -113,18 +106,13 @@ async function convertExcel(){
     }
   }
 
-  // Agar InsurerRequirement missing hai, hum auto bana denge
   const allowMissingKey = missing.length === 1 && missing[0] === "InsurerRequirement";
   if(missing.length > 0 && !allowMissingKey){
-    alert(
-      "Excel headers match nahi ho rahe.\nMissing (auto detect nahi hua):\n- " +
-      missing.join("\n- ") +
-      "\n\nTip: Excel ke headers ko thoda correct karo."
-    );
+    alert("Excel headers match nahi ho rahe.\nMissing:\n- " + missing.join("\n- "));
     return;
   }
 
-  setProgress(30, "Converting to endorsementData...");
+  setProgress(30, "Converting...");
 
   const out = [];
   const totalRows = rows.length - 1;
@@ -139,8 +127,7 @@ async function convertExcel(){
       obj[key] = (idx === undefined) ? "" : safeValue(row[idx]);
     }
 
-    // Auto build InsurerRequirement
-    if(!obj["InsurerRequirement"] || obj["InsurerRequirement"].trim() === ""){
+    if(!obj["InsurerRequirement"]){
       obj["InsurerRequirement"] = (obj["Insurer"] + obj["Requirement"]).trim();
     }
 
@@ -148,35 +135,28 @@ async function convertExcel(){
 
     if(i % 200 === 0){
       const pct = Math.min(95, Math.round((i / totalRows) * 100));
-      setProgress(pct, `Converting... ${i}/${totalRows} rows`);
+      setProgress(pct, `Converting... ${i}/${totalRows}`);
       await new Promise(r => setTimeout(r, 0));
     }
   }
 
   setProgress(97, "Generating JS output...");
 
-  // EXACT output style
   let jsText = "const endorsementData = [\n";
-
   for(let i=0; i<out.length; i++){
-    const prettyObj = JSON.stringify(out[i], null, 4)
-      .replace(/\n/g, "\n    ");
-
-    jsText += "    " + prettyObj;
-    jsText += (i === out.length - 1) ? "\n" : ",\n";
+    const prettyObj = JSON.stringify(out[i], null, 4).replace(/\n/g, "\n    ");
+    jsText += "    " + prettyObj + (i === out.length - 1 ? "\n" : ",\n");
   }
-
   jsText += "];\n";
 
   lastJS = jsText;
   outputJS.value = jsText;
 
-  // Preview first 20
-  preview.value = out.slice(0, 20).map((r, idx) => {
-    return `${idx+1}) ${r["Insurer"]} | ${r["Requirement"]} | ${r["Endorsement type"]}`;
-  }).join("\n");
+  preview.value = out.slice(0, 20).map((r, idx) =>
+    `${idx+1}) ${r["Insurer"]} | ${r["Requirement"]} | ${r["Endorsement type"]}`
+  ).join("\n");
 
-  setProgress(100, `✅ Done! Total rows converted: ${out.length}`);
+  setProgress(100, `✅ Done! Rows: ${out.length}`);
 }
 
 function copyJS(){
@@ -185,7 +165,7 @@ function copyJS(){
     return;
   }
   navigator.clipboard.writeText(lastJS);
-  statusEl.textContent = "✅ Copied to clipboard!";
+  statusEl.textContent = "✅ Copied!";
 }
 
 function downloadJS(){
@@ -210,7 +190,6 @@ function clearAll(){
   setProgress(0, "Ready.");
 }
 
-// Button events
 btnConvert.addEventListener("click", convertExcel);
 btnCopy.addEventListener("click", copyJS);
 btnDownload.addEventListener("click", downloadJS);
