@@ -23,15 +23,33 @@
       <div class="small" id="status">Ready.</div>
       <div class="barWrap"><div class="bar" id="bar"></div></div>
 
+      <div class="summary" id="summary">
+        <span>Total input lines: 0</span>
+        <span>Output rows: 0</span>
+        <span>Errors: 0</span>
+      </div>
+
       <div class="grid">
         <div>
-          <h3 class="title">📥 Excel Preview</h3>
-          <textarea id="preview" readonly placeholder="Preview will appear here..."></textarea>
+          <h3 class="title">📥 Input Values</h3>
+          <textarea id="preview" readonly placeholder="Excel input values will appear here..."></textarea>
         </div>
 
         <div>
           <h3 class="title">📤 Output endorsementData.js</h3>
           <textarea id="outputJS" readonly placeholder="JS output will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div class="detailsGrid">
+        <div>
+          <h3 class="title">Output Values</h3>
+          <textarea id="outputValues" readonly placeholder="Converted output values will appear here..."></textarea>
+        </div>
+
+        <div>
+          <h3 class="title">Errors / Warnings</h3>
+          <textarea id="errorLog" readonly placeholder="Errors and warnings will appear here..."></textarea>
         </div>
       </div>
     </div>
