@@ -1,6 +1,9 @@
 const fileInput = document.getElementById("fileInput");
 const outputJS = document.getElementById("outputJS");
 const preview = document.getElementById("preview");
+const outputValues = document.getElementById("outputValues");
+const errorLog = document.getElementById("errorLog");
+const summary = document.getElementById("summary");
 const statusEl = document.getElementById("status");
 const bar = document.getElementById("bar");
 
@@ -57,6 +60,28 @@ function setProgress(pct, msg){
   statusEl.textContent = msg;
 }
 
+function updateSummary(inputLines = 0, outputRows = 0, errors = 0){
+  summary.innerHTML = `
+    <span>Total input lines: ${inputLines}</span>
+    <span>Output rows: ${outputRows}</span>
+    <span>Errors: ${errors}</span>
+  `;
+}
+
+function formatRawInputRows(rows){
+  return rows.map((row, idx) => {
+    const values = (row || []).map((cell, cellIdx) => `C${cellIdx + 1}: ${safeValue(cell) || "(blank)"}`);
+    return `Line ${idx + 1}\n${values.join("\n")}`;
+  }).join("\n\n");
+}
+
+function formatOutputRows(rows){
+  return rows.map((row, idx) => {
+    const values = FINAL_HEADERS.map(key => `${key}: ${row[key] || "(blank)"}`);
+    return `Output ${idx + 1}\n${values.join("\n")}`;
+  }).join("\n\n");
+}
+
 function findColumnIndex(headerRow, targetFinalHeader){
   const aliases = HEADER_ALIASES[targetFinalHeader] || [targetFinalHeader];
   const normalizedHeaderRow = headerRow.map(normalizeHeader);
@@ -69,94 +94,124 @@ function findColumnIndex(headerRow, targetFinalHeader){
 }
 
 async function convertExcel(){
-  const file = fileInput.files?.[0];
-  if(!file){
-    alert("Pehle Excel file upload karo (.xlsx)");
-    return;
-  }
+  const errors = [];
 
-  setProgress(5, "Reading Excel...");
-
-  const data = await file.arrayBuffer();
-  const workbook = XLSX.read(data, { type: "array" });
-
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-
-  setProgress(15, "Parsing rows...");
-
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-
-  if(!rows || rows.length < 2){
-    alert("Excel me data nahi mila. (Header + rows hona chahiye)");
-    return;
-  }
-
-  const headerRow = rows[0].map(h => (h ?? "").toString().trim());
-
-  const colMap = {};
-  const missing = [];
-
-  for(const finalHeader of FINAL_HEADERS){
-    const idx = findColumnIndex(headerRow, finalHeader);
-    if(idx === -1){
-      missing.push(finalHeader);
-    } else {
-      colMap[finalHeader] = idx;
-    }
-  }
-
-  const allowMissingKey = missing.length === 1 && missing[0] === "InsurerRequirement";
-  if(missing.length > 0 && !allowMissingKey){
-    alert("Excel headers match nahi ho rahe.\nMissing:\n- " + missing.join("\n- "));
-    return;
-  }
-
-  setProgress(30, "Converting...");
-
-  const out = [];
-  const totalRows = rows.length - 1;
-
-  for(let i=1; i<rows.length; i++){
-    const row = rows[i];
-    if(!row || row.join("").trim() === "") continue;
-
-    const obj = {};
-    for(const key of FINAL_HEADERS){
-      const idx = colMap[key];
-      obj[key] = (idx === undefined) ? "" : safeValue(row[idx]);
+  try{
+    const file = fileInput.files?.[0];
+    if(!file){
+      throw new Error("Pehle Excel file upload karo (.xlsx)");
     }
 
-    if(!obj["InsurerRequirement"]){
-      obj["InsurerRequirement"] = (obj["Insurer"] + obj["Requirement"]).trim();
+    preview.value = "";
+    outputJS.value = "";
+    outputValues.value = "";
+    errorLog.value = "";
+    lastJS = "";
+    updateSummary(0, 0, 0);
+
+    setProgress(5, "Reading Excel...");
+
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: "array" });
+
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    setProgress(15, "Parsing rows...");
+
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+    if(!rows || rows.length < 2){
+      throw new Error("Excel me data nahi mila. Header + rows hona chahiye.");
     }
 
-    out.push(obj);
+    preview.value = formatRawInputRows(rows);
 
-    if(i % 200 === 0){
-      const pct = Math.min(95, Math.round((i / totalRows) * 100));
-      setProgress(pct, `Converting... ${i}/${totalRows}`);
-      await new Promise(r => setTimeout(r, 0));
+    const headerRow = rows[0].map(h => (h ?? "").toString().trim());
+
+    const colMap = {};
+    const missing = [];
+
+    for(const finalHeader of FINAL_HEADERS){
+      const idx = findColumnIndex(headerRow, finalHeader);
+      if(idx === -1){
+        missing.push(finalHeader);
+      } else {
+        colMap[finalHeader] = idx;
+      }
     }
+
+    const allowMissingKey = missing.length === 1 && missing[0] === "InsurerRequirement";
+    if(missing.length > 0 && !allowMissingKey){
+      errors.push("Missing headers:\n- " + missing.join("\n- "));
+      throw new Error("Excel headers match nahi ho rahe.");
+    }
+
+    if(allowMissingKey){
+      errors.push("Warning: InsurerRequirement column missing hai. App Insurer + Requirement se auto bana raha hai.");
+    }
+
+    setProgress(30, "Converting...");
+
+    const out = [];
+    const totalRows = rows.length - 1;
+
+    for(let i=1; i<rows.length; i++){
+      const row = rows[i];
+      if(!row || row.join("").trim() === ""){
+        errors.push(`Line ${i + 1}: blank row skip ki gayi.`);
+        continue;
+      }
+
+      const obj = {};
+      for(const key of FINAL_HEADERS){
+        const idx = colMap[key];
+        obj[key] = (idx === undefined) ? "" : safeValue(row[idx]);
+      }
+
+      if(!obj["InsurerRequirement"]){
+        obj["InsurerRequirement"] = (obj["Insurer"] + obj["Requirement"]).trim();
+      }
+
+      if(!obj["Insurer"]){
+        errors.push(`Line ${i + 1}: Insurer blank hai.`);
+      }
+
+      if(!obj["Requirement"]){
+        errors.push(`Line ${i + 1}: Requirement blank hai.`);
+      }
+
+      out.push(obj);
+
+      if(i % 200 === 0){
+        const pct = Math.min(95, Math.round((i / totalRows) * 100));
+        setProgress(pct, `Converting... ${i}/${totalRows}`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    setProgress(97, "Generating JS output...");
+
+    let jsText = "const endorsementData = [\n";
+    for(let i=0; i<out.length; i++){
+      const prettyObj = JSON.stringify(out[i], null, 4).replace(/\n/g, "\n    ");
+      jsText += "    " + prettyObj + (i === out.length - 1 ? "\n" : ",\n");
+    }
+    jsText += "];\n";
+
+    lastJS = jsText;
+    outputJS.value = jsText;
+    outputValues.value = formatOutputRows(out);
+    errorLog.value = errors.length ? errors.join("\n\n") : "No errors found.";
+    updateSummary(totalRows, out.length, errors.length);
+
+    setProgress(100, `Done! Rows: ${out.length}, Errors: ${errors.length}`);
+  } catch(err){
+    errors.push(err.message || String(err));
+    errorLog.value = errors.join("\n\n");
+    updateSummary(0, 0, errors.length);
+    setProgress(0, "Error: " + (err.message || String(err)));
   }
-
-  setProgress(97, "Generating JS output...");
-
-  let jsText = "const endorsementData = [\n";
-  for(let i=0; i<out.length; i++){
-    const prettyObj = JSON.stringify(out[i], null, 4).replace(/\n/g, "\n    ");
-    jsText += "    " + prettyObj + (i === out.length - 1 ? "\n" : ",\n");
-  }
-  jsText += "];\n";
-
-  lastJS = jsText;
-  outputJS.value = jsText;
-
-  preview.value = out.slice(0, 20).map((r, idx) =>
-    `${idx+1}) ${r["Insurer"]} | ${r["Requirement"]} | ${r["Endorsement type"]}`
-  ).join("\n");
-
-  setProgress(100, `✅ Done! Rows: ${out.length}`);
 }
 
 function copyJS(){
@@ -186,7 +241,10 @@ function clearAll(){
   fileInput.value = "";
   outputJS.value = "";
   preview.value = "";
+  outputValues.value = "";
+  errorLog.value = "";
   lastJS = "";
+  updateSummary(0, 0, 0);
   setProgress(0, "Ready.");
 }
 
