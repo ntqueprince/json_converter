@@ -1,3 +1,7 @@
+*{
+  box-sizing:border-box;
+}
+
 body{
   font-family: Arial;
   background:#0b1220;
@@ -48,14 +52,20 @@ textarea{
   font-size:13px;
   line-height:1.4;
   resize:vertical;
+  white-space:pre;
 }
 
 #preview{
-  min-height:220px;
+  min-height:300px;
 }
 
 #outputJS{
   min-height:520px;
+}
+
+#outputValues,
+#errorLog{
+  min-height:220px;
 }
 
 button{
@@ -87,9 +97,38 @@ input[type="file"]{
 
 .grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
   gap:14px;
   margin-top:14px;
+}
+
+.detailsGrid{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:14px;
+  margin-top:14px;
+}
+
+.grid > div,
+.detailsGrid > div{
+  min-width:0;
+}
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.summary span{
+  background:#0f1a33;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  color:#dbeafe;
+  font-size:13px;
+  font-weight:700;
+  padding:10px 12px;
 }
 
 .small{
@@ -116,7 +155,9 @@ input[type="file"]{
 }
 
 @media(max-width:900px){
-  .grid{
+  .grid,
+  .detailsGrid,
+  .summary{
     grid-template-columns:1fr;
   }
 }
